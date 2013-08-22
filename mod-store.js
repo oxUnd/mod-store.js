@@ -15,19 +15,19 @@ var require, define;
         scriptsMap = {},
         resMap, pkgMap;
 
-    function loadByXHR(url, callback) {
+    function loadByXHR(id, url, callback) {
         var store = localStorage
-            , content;
-        if ((content = store.getItem(url))) {
-            callback(content);
-        } else {
+            , content
+            , item;
+        
+        function _load(url, cb) {
             var xhr = new window.XMLHttpRequest;
             xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4 ) {// 4 = "loaded"
-                    if (xhr.status==200) {// 200 = OK
+                if (xhr.readyState == 4 ) {
+                    if (xhr.status==200) {
                         content = xhr.responseText
-                        store.setItem(url, content);
-                        callback(content);
+                        store.setItem(id, JSON.stringify({url: url, content: content}));
+                        cb(content);
                     } else {
                         throw new Error('A unkown error occurred.');
                     }
@@ -35,6 +35,17 @@ var require, define;
             };
             xhr.open('get', url);
             xhr.send(null);
+        }
+        
+        if ((item = store.getItem(id))) {
+            item = JSON.parse(item);
+            if (item.url !== url) {
+                _load(url, callback);
+            } else {
+                callback(item.content);
+            }
+        } else {
+            _load(url, callback);
         }
     }
 
@@ -57,7 +68,7 @@ var require, define;
                 script.src = url;
                 head.appendChild(script);
             } else {
-                loadByXHR(url, function(content) {
+                loadByXHR(id, url, function(content) {
                     script = document.createElement('script');
                     script.type = 'text/javascript';
                     script.innerHTML = content;
