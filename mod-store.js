@@ -3,7 +3,7 @@
  * ver: 1.0.0
  * auth: zhangjiachen@baidu.com
  * modify: fansekey@gmail.com
- * update: 2013-8-20
+ * update: 2013-11-12
  */
 var require, define;
 
@@ -13,13 +13,14 @@ var require, define;
         factoryMap = {},
         modulesMap = {},
         scriptsMap = {},
-        resMap, pkgMap;
+        resMap = {},
+        pkgMap = {};
 
     function loadByXHR(id, url, callback) {
         var store = localStorage
             , content
             , item;
-        
+
         function _load(url, cb) {
             var xhr = new window.XMLHttpRequest;
             xhr.onreadystatechange = function() {
@@ -36,7 +37,7 @@ var require, define;
             xhr.open('get', url);
             xhr.send(null);
         }
-        
+
         if ((item = store.getItem(id))) {
             item = JSON.parse(item);
             if (item.url !== url) {
@@ -171,8 +172,21 @@ var require, define;
     };
 
     require.resourceMap = function(obj) {
-        resMap = obj['res'] || {};
-        pkgMap = obj['pkg'] || {};
+        var k, col;
+
+        col = obj.res;
+        for(k in col) {
+            if (col.hasOwnProperty(k)) {
+                resMap[k] = col[k];
+            }
+        }
+
+        col = obj.pkg;
+        for(k in col) {
+            if (col.hasOwnProperty(k)) {
+                pkgMap[k] = col[k];
+            }
+        }
     };
 
     require.alias = function(id) {return id};
