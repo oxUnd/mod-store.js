@@ -1,0 +1,1 @@
+define('ls1', function(require, exports, module){exports.ls = function() {a = 1;};});
