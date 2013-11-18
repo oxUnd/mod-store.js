@@ -27,7 +27,15 @@ var require, define;
                 if (xhr.readyState == 4 ) {
                     if (xhr.status==200) {
                         content = xhr.responseText
-                        store.setItem(id, JSON.stringify({url: url, content: content}));
+                        var oldUrl = store.getItem(id);
+
+                        if (oldUrl) {
+                            store.removeItem(oldUrl);
+                        }
+                        
+                        store.setItem(url, content);
+                        store.setItem(id, url);
+
                         cb(content);
                     } else {
                         throw new Error('A unkown error occurred.');
@@ -38,13 +46,13 @@ var require, define;
             xhr.send(null);
         }
 
-        if ((item = store.getItem(id))) {
-            item = JSON.parse(item);
-            if (item.url !== url) {
-                _load(url, callback);
-            } else {
-                callback(item.content);
+        if ((content = store.getItem(url))) {
+            
+            if (!store.getItem(id)) {
+                store.setItem(id, url);
             }
+
+            callback(content);
         } else {
             _load(url, callback);
         }
