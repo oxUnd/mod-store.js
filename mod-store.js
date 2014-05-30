@@ -1,13 +1,14 @@
 /**
  * file: mod-store.js
- * ver: 1.0.0
+ * ver: 1.0.1
  * auth: zhangjiachen@baidu.com
- * modify: fansekey@gmail.com
- * update: 2013-11-13
+ * modify: fansekey@gmail.com qdsang@gmail.com
+ * update: 2014-05-27
+ * mod github: https://github.com/zjcqoo/mod
  */
 var require, define;
 
-(function(self) {
+(function(global) {
     var head = document.getElementsByTagName('head')[0],
         loadingMap = {},
         factoryMap = {},
@@ -15,6 +16,7 @@ var require, define;
         scriptsMap = {},
         resMap = {},
         pkgMap = {};
+
 
     function loadByXHR(id, url, callback) {
         var store = localStorage
@@ -85,7 +87,6 @@ var require, define;
         return script;
     }
 
-
     function loadScript(id, callback, onerror) {
         var queue = loadingMap[id] || (loadingMap[id] = []);
         queue.push(callback);
@@ -103,11 +104,10 @@ var require, define;
             url = res.url || id;
         }
 
-
         if (!window.XMLHttpRequest) {
-        	createScript(url, onerror && function() {
-        		onerror(id);
-        	});
+            createScript(url, onerror && function() {
+                onerror(id);
+            });
         } else {
             if (! (url in scriptsMap))  {
                 scriptsMap[url] = true;
@@ -126,7 +126,7 @@ var require, define;
 
         var queue = loadingMap[id];
         if (queue) {
-            for(var i = queue.length - 1; i >= 0; --i) {
+            for(var i = 0, n = queue.length; i < n; i++) {
                 queue[i]();
             }
             delete loadingMap[id];
@@ -146,7 +146,7 @@ var require, define;
         //
         var factory = factoryMap[id];
         if (!factory) {
-            throw Error('Cannot find module `' + id + '`');
+            throw '[ModJS] Cannot find module `' + id + '`';
         }
 
         mod = modulesMap[id] = {
@@ -170,8 +170,8 @@ var require, define;
         if (typeof names == 'string') {
             names = [names];
         }
-
-        for(var i = names.length - 1; i >= 0; --i) {
+        
+        for(var i = 0, n = names.length; i < n; i++) {
             names[i] = require.alias(names[i]);
         }
 
@@ -179,11 +179,17 @@ var require, define;
         var needNum = 0;
 
         function findNeed(depArr) {
-            for(var i = depArr.length - 1; i >= 0; --i) {
+            for(var i = 0, n = depArr.length; i < n; i++) {
                 //
                 // skip loading or loaded
                 //
                 var dep = depArr[i];
+
+                var child = resMap[dep];
+                if (child && 'deps' in child) {
+                    findNeed(child.deps);
+                }
+                
                 if (dep in factoryMap || dep in needMap) {
                     continue;
                 }
@@ -191,24 +197,20 @@ var require, define;
                 needMap[dep] = true;
                 needNum++;
                 loadScript(dep, updateNeed, onerror);
-
-                var child = resMap[dep];
-                if (child && 'deps' in child) {
-                    findNeed(child.deps);
-                }
             }
         }
 
         function updateNeed() {
             if (0 == needNum--) {
-                var i, n, args = [];
-                for(i = 0, n = names.length; i < n; ++i) {
+                var args = [];
+                for(var i = 0, n = names.length; i < n; i++) {
                     args[i] = require(names[i]);
                 }
-                onload && onload.apply(self, args);
+
+                onload && onload.apply(global, args);
             }
         }
-
+        
         findNeed(names);
         updateNeed();
     };
@@ -240,7 +242,7 @@ var require, define;
         if (cfg.content) {
             var sty = document.createElement('style');
             sty.type = 'text/css';
-
+            
             if (sty.styleSheet) {       // IE
                 sty.styleSheet.cssText = cfg.content;
             } else {
